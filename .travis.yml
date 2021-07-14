@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tmudd/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true tmudd/react-test npm test
+
+after_success:
+  - docker build -t tmudd/multi-client ./client
+  - docker build -t tmudd/multi-nginx ./nginx
+  - docker build -t tmudd/multi-server ./server
+  - docker build -t tmudd/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those immages and push them to docker hub
+  - docker push tmudd/multi-client
+  - docker push tmudd/multi-nginx
+  - docker push tmudd/multi-server
+  - docker push tmudd/multi-worker
